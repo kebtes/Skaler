@@ -12,12 +12,14 @@ class NoAvailableProviders(SkalerError):
     due to rate limits or request failures.
     """
     def __init__(self, message=None):
-        super().__init__(message or "No providers are available or all are blocked.")
+        msg = "No providers are available or all are blocked."
+        super().__init__(message or msg)
 
 
 class ProviderBlocked(SkalerError):
     """
-    Raised when a request is attempted using a provider that is currently blocked.
+    Raised when a request is attempted using a provider that is currently
+    blocked.
 
     Attributes:
         provider_name (str): The name or identifier of the blocked provider.
@@ -29,14 +31,21 @@ class ProviderBlocked(SkalerError):
 
 class RequestFailed(SkalerError):
     """
-    Raised when an HTTP request to an API provider fails in a non-retryable way.
+    Raised when an HTTP request to an API provider fails in a
+    non-retryable way.
 
     Attributes:
         provider_name (str): The name of the provider that failed.
         status_code (int, optional): The HTTP status code returned by the API.
-        reason (str, optional): A description or message about why the request failed.
+        reason (str, optional): A description or message about why the
+            request failed.
     """
-    def __init__(self, provider_name: str, status_code: int = None, reason: str = None):
+    def __init__(
+            self,
+            provider_name: str,
+            status_code: int = None,
+            reason: str = None
+        ):
         self.provider_name = provider_name
         self.status_code = status_code
         self.reason = reason
