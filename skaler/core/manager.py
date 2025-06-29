@@ -1,7 +1,9 @@
 import httpx
 
-from skaler import APIProvider, ProxyPool, Requester
-from skaler.exceptions import NoAvailableProviders, RequestFailed
+from ..core.providers import APIProvider, DummyProvider
+from ..core.proxy_pool import ProxyPool
+from ..exceptions import NoAvailableProviders, RequestFailed
+from ..http.requester import Requester
 
 
 class SkaleManager:
@@ -10,26 +12,42 @@ class SkaleManager:
     Handles rate-limiting, provider blocking, and proxy rotation.
 
     Attributes:
-        providers (List[APIProvider]): List of available API providers.
+        providers (List[APIProvider], optional): List of API provider instances.
+                If not provided, a DummyProvider will be used.
         requester (Requester): The HTTP client wrapper for sending requests.
         proxies (ProxyPool or None): Optional proxy pool for rotating proxies.
     """
 
-    def __init__(self, providers: list[APIProvider], *, proxies: ProxyPool = None, requester=None):
+    def __init__(
+        self,
+        *,
+        providers: list[APIProvider] = None,
+        proxies: ProxyPool = None,
+        requester=None
+    ) -> None:
         """
-        Initializes the SkaleManager with providers, optional proxies, and a requester
+        Initializes the SkaleManager with providers, optional proxies,
+        and a requester
 
         Args:
             providers (List[APIProvider]): List of API provider instances.
             proxies (ProxyPool, optional): ProxyPool instance to rotate proxies.
-            requester (Requester, optional): Custom requester. Defaults to 'Requester()'.
+            requester (Requester, optional): Custom requester.
+                Defaults to 'Requester()'.
         """
 
-        self.providers = providers
+        self.providers = providers or [DummyProvider()]
         self.requester = requester or Requester()
         self.proxies = proxies or []
 
-    async def send_request(self, method: str, url: str, headers=None, data=None, timeout=10) -> httpx.Response:
+    async def send_request(
+        self,
+        method: str,
+        url: str,
+        headers=None,
+        data=None,
+        timeout=10
+    ) -> httpx.Response:
         """
         Sends an HTTP request using the first available provider.
         Will rotate through providers and proxies if necessary.
@@ -38,14 +56,15 @@ class SkaleManager:
             method (str): HTTP method (e.g., 'GET', 'POST').
             url (str): Target URL for the request.
             headers (dict, optional): Custom headers to include.
-            data (dict, optional): JSON-serializable data to send in the request body.
+            data (dict, optional): JSON-serializable data to send in the
+                request body.
             timeout (int): Timeout in seconds for the request.
 
         Returns:
             httpx.Response: The HTTP response from the API.
 
         Raises:
-            RequestFailed: If the request fails due to a connection or API error.
+            RequestFailed: If the request fails due to a connection or API error
             NoAvailableProviders: If all providers are blocked or rate-limited.
         """
 
@@ -74,19 +93,23 @@ class SkaleManager:
 
         raise NoAvailableProviders
 
-    async def _get_next_proxy(self):
+    async def _get_next_proxy(self) -> None:
         """
-        Returns the next proxy in a round-robin fashion by cycling through the proxy list.
+        Returns the next proxy in a round-robin fashion by cycling
+        through the proxy list.
 
-        This method removes the first proxy from the list and appends it to the end,
-        effectively rotating the list so that each proxy is used in turn.
+        This method removes the first proxy from the list and appends it
+        to the end, effectively rotating the list so that each proxy
+        is used in turn.
 
         Returns:
-            str or None: The next proxy URL if the proxy list is not empty; otherwise, None.
+            str or None: The next proxy URL if the proxy list is not empty;
+                otherwise, None.
         """
 
         if not self.proxies:
             return None
+
         proxy = self.proxies.pop(0)
         self.proxies.append(proxy)
         return proxy
