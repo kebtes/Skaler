@@ -4,15 +4,20 @@ import time
 class ProxyPool:
     """
     Manages a list of proxies with round-robin rotation and temporary blocking.
-    Automatically skips over proxies that are blocked and re-includes them after TTL.
+    Automatically skips over proxies that are blocked and re-includes them
+    after TTL.
 
     Attributes:
         _proxies (List[str]): List of proxy URLS.
         _index (int): Current index in the proxy list for round-robin rotation.
-        _blocked (Dict[str, float]): Dictionary mapping proxy URLs to unblock timestamps.
+        _blocked (Dict[str, float]): Dictionary mapping proxy URLs to unblock
+            timestamps.
     """
 
-    def __init__(self, proxy_list: list[str]):
+    def __init__(
+        self,
+        proxy_list: list[str]
+    ) -> None:
         """
         Initializes the proxy pool with a list of proxies.
 
@@ -26,10 +31,12 @@ class ProxyPool:
 
     def get_next(self) -> str | None:
         """
-        Returns the next available (not blocked) proxy using round-robin rotation.
+        Returns the next available (not blocked) proxy using
+        round-robin rotation.
 
         Returns:
-            str | None: The next available proxy URL, or None if all are blocked or list is empty.
+            str | None: The next available proxy URL, or None if all are blocked
+                or list is empty.
         """
         start = self._index
 
@@ -46,20 +53,22 @@ class ProxyPool:
             if self._index == start:
                 return None
 
-    def block(self, proxy: str, ttl: int = 60):
+    def block(self, proxy: str, ttl: int = 60) -> None:
         """
         Temporarily blocks a proxy for a given number of seconds.
 
         Args:
             proxy (str): The proxy URL to block.
-            ttl (int): Time-to-live (in seconds) before the proxy becomes available again.
+            ttl (int): Time-to-live (in seconds) before the proxy becomes
+                available again.
         """
 
         self._blocked[proxy] = time.time() + ttl
 
     def _is_blocked(self, proxy: str) -> bool:
         """
-        Checks whether a proxy is currently blocked. Unblocks it if TTL has expired.
+        Checks whether a proxy is currently blocked.
+        Unblocks it if TTL has expired.
 
         Args:
             proxy (str): The proxy URL to check.
